@@ -1,0 +1,104 @@
+[tool.poetry]
+name = "diffusion-models-pytorch"
+version = "0.1.0"
+description = "Tutorial for coding diffusion models using PyTorch"
+authors = ["Anshul Kanakia <anshul.p.kanakia@gmail.com>"]
+readme = "README.md"
+packages = [{include = "diffusion_models_pytorch"}]
+
+
+[[tool.poetry.source]]
+name = "cutorch"
+url = "https://download.pytorch.org/whl/cu124"
+priority = "explicit"
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^2.1.1"
+tqdm = "^4.66.5"
+jupyter = "^1.1.1"
+ipykernel = "^6.29.5"
+matplotlib = "^3.9.2"
+pillow = "^10.4.0"
+torchvision = {version = "^0.19.1+cu124", source = "cutorch"}
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.8"
+black = "^24.8.0"
+pre-commit = "^3.8.0"
+nbstripout = "^0.7.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+###################################
+#
+#              SETTINGS
+#
+###################################
+
+[tool.black]
+line-length = 125
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "__init__.py",
+    "setup.py",
+]
+
+# Builtins
+
+builtins=["__version__"]
+
+# Same as Black.
+line-length = 125
+
+# Assume Python 3.10.
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+select = ["D","E", "F","W","I001"]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["A", "B", "C", "D", "E", "F", "I"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.pydocstyle]
+# Always use numpy-style docstrings
+convention = "numpy"
+
+[tool.ruff.lint.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
