@@ -120,7 +120,7 @@ class Diffusion:
         return x
 
 
-def train(args: Namespace) -> None:
+def train_ddpm(args: Namespace) -> None:
     """
     Train the diffusion model.
 
@@ -131,7 +131,13 @@ def train(args: Namespace) -> None:
     """
     setup_logging(args.run_name)
     device = args.device
-    dataloader = get_data(args)
+    dataloader = get_data(
+        dataset_name=args.dataset,
+        img_col=args.img_col,
+        img_resize=args.image_size,
+        batch_size=args.batch_size,
+        shuffle=True,
+    )
     model = UNet().to(device)
     optimizer = optim.AdamW(model.parameters(), lr=args.lr)
     mse = nn.MSELoss()
@@ -159,34 +165,3 @@ def train(args: Namespace) -> None:
         sampled_images = diffusion.sample(model, n=images.shape[0])
         save_images(sampled_images, os.path.join("results", args.run_name, f"{epoch}.jpg"))
         torch.save(model.state_dict(), os.path.join("models", args.run_name, "ckpt.pt"))
-
-
-def _launch():
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args()
-    args.run_name = "DDPM_Uncondtional"
-    args.epochs = 500
-    args.batch_size = 12
-    args.image_size = 64
-    args.dataset_path = r"C:\Users\dome\datasets\landscape_img_folder"
-    args.device = "cuda"
-    args.lr = 3e-4
-    train(args)
-
-
-if __name__ == "__main__":
-    _launch()
-    # device = "cuda"
-    # model = UNet().to(device)
-    # ckpt = torch.load("./working/orig/ckpt.pt")
-    # model.load_state_dict(ckpt)
-    # diffusion = Diffusion(img_size=64, device=device)
-    # x = diffusion.sample(model, 8)
-    # print(x.shape)
-    # plt.figure(figsize=(32, 32))
-    # plt.imshow(torch.cat([
-    #     torch.cat([i for i in x.cpu()], dim=-1),
-    # ], dim=-2).permute(1, 2, 0).cpu())
-    # plt.show()
