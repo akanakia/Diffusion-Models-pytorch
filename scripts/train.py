@@ -4,33 +4,37 @@
 import argparse
 from datetime import datetime
 
+import yaml
+from munch import munchify
+
 from diffusion_models_pytorch.ddpm import train_ddpm
 from diffusion_models_pytorch.ddpm_conditional import train_ddpm_conditional
+from diffusion_models_pytorch.utils import setup_output_paths
 
 
-def _parse_args():
+def _load_config():
     parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", type=str, help="Model training yaml configuration path.")
+    parser.add_argument("-r", "--run_id", type=str, default=None, help="Run ID for the model training.")
     args = parser.parse_args()
-    args.model = "ddpm"  # or "ddpm_conditional"
-    args.run_id = f"{args.model}_{datetime.now().strftime("%Y%m%d%H%M%S")}"
-    args.epochs = 500
-    args.batch_size = 12
-    args.image_size = 64
-    args.dataset = "amaye15/landscapes"  # or "uoft-cs/cifar10"
-    args.img_col = "pixel_values"  # or "img"
-    args.device = "cuda"
-    args.lr = 3e-4
-    return args
+
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
+    if args.run_id is None:
+        args.run_id = f"{config['model']}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    config["run_id"] = args.run_id
+    return munchify(config)
 
 
 def _launch():
-    args = _parse_args()
-    if args.model == "ddpm":
-        train_ddpm(args)
-    elif args.model == "ddpm_conditional":
-        train_ddpm_conditional(args)
+    config = _load_config()
+    config.result_path, config.trained_path, config.logs_path = setup_output_paths(config.output_path, config.run_id)
+    if config.model == "ddpm":
+        train_ddpm(config)
+    elif config.model == "ddpm_conditional":
+        train_ddpm_conditional(config)
     else:
-        raise ValueError(f"Unknown model: {args.model}")
+        raise ValueError(f"Unknown model: {config.model}")
 
 
 if __name__ == "__main__":

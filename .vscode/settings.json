@@ -1,14 +1,13 @@
 {
-    "python.formatting.provider": "autopep8",
-    "python.formatting.autopep8Args": ["--indent-size=4"],
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": false,
-    "python.linting.mypyEnabled": false,
-    "python.linting.ruffEnabled": true,
-    "python.autoDocstring.docstringFormat": "numpy",
+    "[python]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.defaultFormatter": "ms-python.autopep8",
+    },
+    "autoDocstring.docstringFormat": "numpy",
+    "python.terminal.activateEnvironment": false,
     "editor.renderWhitespace": "all",
     "editor.rulers": [125],
     "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
+    "files.insertFinalNewline": true
 }

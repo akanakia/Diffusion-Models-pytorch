@@ -1,0 +1,17 @@
+model: "ddpm_conditional"
+output_path: "D:/models/ddpm_conditional"
+
+# Data parameters
+dataset: "uoft-cs/cifar10"
+img_col: "img"
+img_size: 64
+batch_size: 12
+num_classes: 10
+
+# Model parameters
+device: "cuda"
+epochs: 100
+noise_steps: 100
+beta_start: 0.0001
+beta_end: 0.02
+lr: 0.0003

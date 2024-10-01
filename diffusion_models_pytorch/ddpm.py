@@ -4,16 +4,16 @@
 
 import logging
 import os
-from argparse import Namespace
 
 import torch
 import torch.nn as nn
+from munch import Munch
 from torch import optim
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from .modules import UNet
-from .utils import get_data, save_images, setup_logging
+from .utils import get_data, save_images
 
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%I:%M:%S")
 
@@ -100,7 +100,7 @@ class Diffusion:
         model.eval()
         with torch.no_grad():
             x = torch.randn((n, 3, self.img_size, self.img_size)).to(self.device)
-            for i in tqdm(reversed(range(1, self.noise_steps)), position=0):
+            for i in tqdm(reversed(range(1, self.noise_steps)), position=0, total=self.noise_steps - 1):
                 t = (torch.ones(n) * i).long().to(self.device)
                 predicted_noise = model(x, t)
                 alpha = self.alpha[t][:, None, None, None]
@@ -120,7 +120,7 @@ class Diffusion:
         return x
 
 
-def train_ddpm(args: Namespace) -> None:
+def train_ddpm(config: Munch) -> None:
     """
     Train the diffusion model.
 
@@ -129,23 +129,28 @@ def train_ddpm(args: Namespace) -> None:
     args : Namespace
         The arguments containing training configurations.
     """
-    setup_logging(args.run_name)
-    device = args.device
+    device = config.device
     dataloader = get_data(
-        dataset_name=args.dataset,
-        img_col=args.img_col,
-        img_resize=args.image_size,
-        batch_size=args.batch_size,
+        dataset_name=config.dataset,
+        img_col=config.img_col,
+        img_resize=config.img_size,
+        batch_size=config.batch_size,
         shuffle=True,
     )
     model = UNet().to(device)
-    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+    optimizer = optim.AdamW(model.parameters(), lr=config.lr)
     mse = nn.MSELoss()
-    diffusion = Diffusion(img_size=args.image_size, device=device)
-    logger = SummaryWriter(os.path.join("runs", args.run_name))
+    diffusion = Diffusion(
+        noise_steps=config.noise_steps,
+        beta_start=config.beta_start,
+        beta_end=config.beta_end,
+        img_size=config.img_size,
+        device=device,
+    )
+    logger = SummaryWriter(config.logs_path)
     data_size = len(dataloader)
 
-    for epoch in range(args.epochs):
+    for epoch in range(config.epochs):
         logging.info(f"Starting epoch {epoch}:")
         pbar = tqdm(dataloader)
         for i, batch in enumerate(pbar):
@@ -164,5 +169,5 @@ def train_ddpm(args: Namespace) -> None:
             logger.add_scalar("MSE", loss.item(), global_step=epoch * data_size + i)
 
         sampled_images = diffusion.sample(model, n=images.shape[0])
-        save_images(sampled_images, os.path.join("results", args.run_name, f"{epoch}.jpg"))
-        torch.save(model.state_dict(), os.path.join("models", args.run_name, "ckpt.pt"))
+        save_images(sampled_images, os.path.join(config.result_path, f"epoch_{epoch}.jpg"))
+        torch.save(model.state_dict(), os.path.join(config.trained_path, f"{config.run_id}_epoch_{epoch}.pt"))

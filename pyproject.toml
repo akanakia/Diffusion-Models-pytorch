@@ -26,6 +26,8 @@ datasets = "^3.0.1"
 pandas = "^2.2.3"
 ipywidgets = "^8.1.5"
 torch = {version = "^2.4.1+cu124", source = "cutorch"}
+munch = "^4.0.0"
+tensorboard = "^2.18.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -84,6 +86,9 @@ line-length = 125
 
 # Assume Python 3.10.
 target-version = "py310"
+
+# Add ruff support for jupyter notebooks.
+extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.

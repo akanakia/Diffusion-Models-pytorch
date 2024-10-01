@@ -6,11 +6,11 @@ import os
 from io import BytesIO
 from typing import Any
 
-import PIL
 import torch
-from datasets import Dataset, DatasetDict, Image, load_dataset
+from datasets import Dataset, DatasetDict, load_dataset
+from datasets import Image as ImageDs
 from matplotlib import pyplot as plt
-from PIL import UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2 as ttv2
 from torchvision.utils import make_grid
@@ -79,8 +79,9 @@ def get_data(dataset_name: str, img_col: str, img_resize: int, split: str = "tra
     transforms = ttv2.Compose(
         [
             ttv2.RandomResizedCrop(img_resize, scale=(0.8, 1.0)),
-            # ttv2.ToDtype(torch.float32, scale=True),
-            ttv2.ToTensor(),
+            ttv2.ToImage(),
+            ttv2.ToDtype(torch.float32, scale=True),
+            # ttv2.ToTensor(),
             ttv2.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
@@ -92,19 +93,22 @@ def get_data(dataset_name: str, img_col: str, img_resize: int, split: str = "tra
     return dataloader
 
 
-def setup_logging(run_name: str) -> None:
+def setup_output_paths(output_path: str, run_id: str) -> None:
     """
     Set up directories for logging models and results.
 
     Parameters
     ----------
-    run_name : str
+    run_id : str
         The name of the run for which to set up logging directories.
     """
-    os.makedirs("models", exist_ok=True)
-    os.makedirs("results", exist_ok=True)
-    os.makedirs(os.path.join("models", run_name), exist_ok=True)
-    os.makedirs(os.path.join("results", run_name), exist_ok=True)
+    results = os.path.join(output_path, run_id, "sampled_output_images")
+    trained = os.path.join(output_path, run_id, "trained")
+    logs = os.path.join(output_path, run_id, "logs")
+    os.makedirs(results, exist_ok=True)
+    os.makedirs(trained, exist_ok=True)
+    os.makedirs(logs, exist_ok=True)
+    return results, trained, logs
 
 
 def set_hf_cache_dir(cache_dir: str = "D:/datasets") -> None:
@@ -127,6 +131,8 @@ def load_hf_dataset(dataset_name: str, img_col: str, split: str = "train") -> Da
     ----------
     dataset_name : str
         The name of the dataset to load.
+    img_col : str
+        The name of the column containing the PIL images.
     split : str, optional
         The specific split of the dataset to load (e.g., 'train', 'test'). If None, the entire dataset is loaded.
 
@@ -138,15 +144,15 @@ def load_hf_dataset(dataset_name: str, img_col: str, split: str = "train") -> Da
 
     def _has_valid_image(row):
         try:
-            PIL.Image.open(BytesIO(row[img_col]["bytes"]))
+            Image.open(BytesIO(row[img_col]["bytes"]))
         except UnidentifiedImageError:
             return False
         return True
 
     ds = load_dataset(dataset_name, cache_dir=os.environ["HF_DATASETS_CACHE"])[split]
-    ds = ds.cast_column(img_col, Image(decode=False))
+    ds = ds.cast_column(img_col, ImageDs(decode=False))
     ds = ds.filter(_has_valid_image)
-    ds = ds.cast_column(img_col, Image(decode=True))
+    ds = ds.cast_column(img_col, ImageDs(decode=True))
     return ds
 
 
@@ -158,6 +164,8 @@ class ImageTransformCollator:
     ----------
     transforms : Callable
         The transformations to apply to the images.
+    img_col : str
+        The name of the column containing the PIL images.
     """
 
     def __init__(self, transforms: callable, img_col: str) -> None:
@@ -176,7 +184,7 @@ class ImageTransformCollator:
         Returns
         -------
         dict
-            A dictionary containing the transformed images and labels.
+            A dictionary containing the transformed images(=X) and labels(=y).
         """
         X = list()
         y = list()

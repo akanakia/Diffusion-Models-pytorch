@@ -1,0 +1,16 @@
+model: "ddpm"
+output_path: "D:/models/ddpm"
+
+# Data parameters
+dataset: "amaye15/landscapes"
+img_col: "pixel_values"
+img_size: 64
+batch_size: 12
+
+# Model parameters
+device: "cuda"
+epochs: 10
+noise_steps: 100
+beta_start: 0.0001
+beta_end: 0.02
+lr: 0.0003
