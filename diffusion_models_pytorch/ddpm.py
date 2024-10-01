@@ -148,7 +148,8 @@ def train_ddpm(args: Namespace) -> None:
     for epoch in range(args.epochs):
         logging.info(f"Starting epoch {epoch}:")
         pbar = tqdm(dataloader)
-        for i, (images, _) in enumerate(pbar):
+        for i, batch in enumerate(pbar):
+            images = batch["X"]
             images = images.to(device)
             t = diffusion.sample_timesteps(images.shape[0]).to(device)
             x_t, noise = diffusion.noise_images(images, t)

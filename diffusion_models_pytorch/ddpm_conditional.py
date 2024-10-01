@@ -153,7 +153,8 @@ def train_ddpm_conditional(args: Namespace) -> None:
     for epoch in range(args.epochs):
         logging.info(f"Starting epoch {epoch}:")
         pbar = tqdm(dataloader)
-        for i, (images, labels) in enumerate(pbar):
+        for i, batch in enumerate(pbar):
+            images, labels = batch["X"], batch["y"]
             images = images.to(device)
             labels = labels.to(device)
             t = diffusion.sample_timesteps(images.shape[0]).to(device)
